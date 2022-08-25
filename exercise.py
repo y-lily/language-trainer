@@ -1,57 +1,70 @@
 from __future__ import annotations
 
+from status import Status
+
 
 class Exercise:
 
     def __init__(self, task: str, body: str, solution: str = "",
-                 status: str = "", difficulty: str = "",
+                 status: str | Status = "", difficulty: str = "",
                  tags: list[str] = []) -> None:
         self.__task = task
         self.__body = body
         self.__solution = solution
-        self.__status = status
+        self.__status = Status.convert(status)
         self.__difficulty = difficulty
         self.__tags = tags
+
+    def __eq__(self, other: object) -> bool:
+        if type(self) is type(other):
+            return all([self.__task == other.__task,
+                        self.__body == other.__body,
+                        self.__difficulty == other.__difficulty])
+        return False
+
+    def __hash__(self) -> int:
+        return hash((self.__task, self.__body, self.__difficulty))
 
     def __str__(self) -> str:
         return (f"{self.__task} (*{self.__difficulty}): '{self.__body}'")
 
-    def matches(self, task: str = "", body: str = "", status: str = "",
+    def matches(self, task: str = "", body: str = "", status: str | Status = "",
                 difficulty: str = "", tags: list[str] = []) -> bool:
         """Check if the exercise satisfies all given restrictions."""
         return all([
             task in self.__task,
             body in self.__body,
-            status in self.__status,
-            difficulty in self.__difficulty,
+            not status or Status.convert(status) == self.__status,
+            not difficulty or difficulty == self.__difficulty,
             all(tag in self.__tags for tag in tags)
         ])
 
     def to_dump(self) -> object:
         return {"task": self.__task, "body": self.__body, "solution": self.__solution,
-                "status": self.__status, "difficulty": self.__difficulty, "tags": self.__tags}
+                "status": self.__status.name, "difficulty": self.__difficulty, "tags": self.__tags}
 
-    def from_load(loaded: dict) -> Exercise:
+    def to_exercise(exercise_data: dict) -> Exercise:
         try:
-            return Exercise(task=loaded["task"],
-                            body=loaded["body"],
-                            solution=loaded.get("solution", ""),
-                            status=loaded.get("status", ""),
-                            difficulty=loaded.get("difficulty", ""),
-                            tags=loaded.get("tags", []))
+            return Exercise(task=exercise_data["task"],
+                            body=exercise_data["body"],
+                            solution=exercise_data.get("solution", ""),
+                            status=exercise_data.get("status", ""),
+                            difficulty=exercise_data.get("difficulty", ""),
+                            tags=exercise_data.get("tags", []))
         except KeyError:
             raise ValueError("Cannot convert from dict to Exercise. \
                 At least one of 'task' and 'body' keys is missing.")
 
-    # def __hash__(self) -> int:
-    #     pass
+    def complete(self) -> None:
+        self.__status = Status.completed
 
-    # def __eq__(self, __o: object) -> bool:
-    #     pass
+    @property
+    def solution(self) -> str:
+        return self.__solution
 
-    # def check_solution(self, solution: str):
-    #     """Tell if the suggested solution is correct, suboptimal or wrong."""
-    #     pass
+    @property
+    def status(self) -> Status:
+        return self.__status
 
 
 if __name__ == "__main__":
@@ -70,30 +83,37 @@ if __name__ == "__main__":
         difficulty = input("Difficulty: ")
         print(Exercise(task=task, body=body, difficulty=difficulty))
 
-    def get_exercise() -> Exercise:
-        task = input("Exercise task: ")
-        body = input("Exercise body: ")
-        solution = input("Solution to the exercise: ")
-        status = input("Status of the exercise: ")
-        difficulty = input("Difficulty of the exercise: ")
-
-        tags = input("Tags separated by commas: ").split(",")
-        tags = [tag.strip().lower() for tag in tags]
-
-        return Exercise(task=task, body=body, solution=solution,
-                        status=status, difficulty=difficulty, tags=tags)
+    from exercise_builder import ask, ask_exercise_info
 
     def dump_load_test():
-        ex = get_exercise()
+        info = ask_exercise_info("Edit your exercise here.")
         print()
+        print(info)
+        print()
+
+        ex = Exercise.to_exercise(info)
         print(ex)
         print()
-        d = ex.to_dump()
-        print(d)
+
+        print(ex.to_dump())
         print()
-        ex2 = Exercise.from_load(d)
-        print(ex2)
-        print()
+        if not ask("Repeat? [Y/n] "):
+            raise EOFError
+
+    def eq_test():
+        ex1 = Exercise.to_exercise(
+            ask_exercise_info("Edit the first exercise."))
+        while True:
+            ex2 = Exercise.to_exercise(
+                ask_exercise_info("Edit the second exercise. Equal exercises should have equal tasks, bodies and difficulties.", ex1))
+
+            print(f"{ex1}\n"
+                  f"{ex2}\n"
+                  f"ex1 {'is' if ex1 == ex2 else 'is not'} equal to ex2")
+
+            if not ask("Repeat? [Y/n] "):
+                raise EOFError
 
     # run_test(str_test)
     # run_test(dump_load_test)
+    # run_test(eq_test)

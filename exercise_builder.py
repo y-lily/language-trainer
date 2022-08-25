@@ -13,7 +13,7 @@ from exercise import Exercise
 class ExerciseBuilder:
     def __init__(self, lang1: str, lang2: str) -> None:
         self.__exercises_fn = make_fn(lang1, lang2, "exerc")
-        self.__exercises = ExerciseManager.from_load(
+        self.__exercises = ExerciseManager.to_exercise_manager(
             load(self.__exercises_fn, []))
 
     def __enter__(self) -> ExerciseBuilder:
@@ -50,7 +50,7 @@ class ExerciseBuilder:
     def add(self) -> None:
         info = ask_exercise_info(
             "Choose what you want to change or leave it empty to finish with editing.")
-        self.__exercises.add(Exercise.from_load(info))
+        self.__exercises.add(Exercise.to_exercise(info))
 
     def view(self) -> None:
         info = ask_exercise_info(
@@ -108,9 +108,8 @@ def ask(prompt: str) -> bool:
             return False
 
 
-def ask_exercise_info(prompt: str) -> dict:
-    blank = Exercise(task="", body="").to_dump()
-    info = {str(n): [k, v] for n, (k, v) in enumerate(blank.items())}
+def ask_exercise_info(prompt: str, base: Exercise = Exercise(task="", body="")) -> dict:
+    info = {str(n): [k, v] for n, (k, v) in enumerate(base.to_dump().items())}
 
     while True:
         cls()
@@ -181,7 +180,7 @@ if __name__ == "__main__":
         print()
         print(d)
         print()
-        print(Exercise.from_load(d))
+        print(Exercise.to_exercise(d))
 
     # run_test(ask_test)
     # run_test(make_fn_test)

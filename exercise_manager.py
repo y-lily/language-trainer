@@ -31,8 +31,8 @@ class ExerciseManager:
     def to_dump(self) -> object:
         return [ex.to_dump() for ex in self.__exercises]
 
-    def from_load(loaded: list) -> ExerciseManager:
-        return ExerciseManager([Exercise.from_load(obj) for obj in loaded])
+    def to_exercise_manager(loaded: list) -> ExerciseManager:
+        return ExerciseManager([Exercise.to_exercise(obj) for obj in loaded])
 
 
 if __name__ == "__main__":
@@ -45,34 +45,15 @@ if __name__ == "__main__":
                 break
         print("\nThe test is over.")
 
-    def get_exercise() -> Exercise:
-        task = input("Exercise task: ")
-        body = input("Exercise body: ")
-        solution = input("Solution to the exercise: ")
-        status = input("Status of the exercise: ")
-        difficulty = input("Difficulty of the exercise: ")
-
-        tags = input("Tags separated by commas: ").split(",")
-        tags = [tag.strip().lower() for tag in tags]
-
-        return Exercise(task=task, body=body, solution=solution,
-                        status=status, difficulty=difficulty, tags=tags)
-
-    def ask(prompt: str) -> bool:
-        while True:
-            answer = input(prompt).strip().lower()
-
-            if answer in ("yes", "y", ""):
-                return True
-            if answer in ("no", "n"):
-                return False
+    from exercise_builder import ask, ask_exercise_info
 
     def iteration_test():
         manager = ExerciseManager()
 
         while True:
             try:
-                manager.add(get_exercise())
+                info = ask_exercise_info("")
+                manager.add(Exercise.to_exercise(info))
             except EOFError:
                 break
 
