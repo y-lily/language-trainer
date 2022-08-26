@@ -6,16 +6,23 @@ from enum import Enum
 class Status(Enum):
     available = 1
     completed = 2
+    delayed = 3
 
-    def convert(obj: object) -> Status:
+    def convert(obj: str | Status) -> Status:
         try:
-            if obj.strip().lower() == Status.completed.name:
-                return Status.completed
+            match obj.strip().lower():
+                case Status.completed.name:
+                    return Status.completed
+                case Status.delayed.name:
+                    return Status.delayed
         except AttributeError:
             pass
 
-        if obj == Status.completed:
-            return Status.completed
+        match obj:
+            case Status.completed:
+                return Status.completed
+            case Status.delayed:
+                return Status.delayed
 
         return Status.available
 
