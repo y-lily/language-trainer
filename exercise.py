@@ -55,16 +55,37 @@ class Exercise:
             raise ValueError("Cannot convert from dict to Exercise. \
                 At least one of 'task' and 'body' keys is missing.")
 
-    def complete(self) -> None:
+    def make_available(self) -> None:
+        self.__status = Status.available
+
+    def make_completed(self) -> None:
         self.__status = Status.completed
+
+    def make_delayed(self) -> None:
+        self.__status = Status.delayed
+
+    def is_available(self) -> bool:
+        return self.__status == Status.available
+
+    def refresh(self) -> None:
+        if self.__status == Status.delayed:
+            self.make_available()
+
+    def replace(self, new_: Exercise) -> None:
+        self.__task = new_.__task
+        self.__body = new_.__body
+        self.__solution = new_.__solution
+        self.__status = new_.__status
+        self.__difficulty = new_.__difficulty
+        self.__tags = new_.__tags
 
     @property
     def solution(self) -> str:
         return self.__solution
 
-    @property
-    def status(self) -> Status:
-        return self.__status
+    # @property
+    # def status(self) -> Status:
+    #     return self.__status
 
 
 if __name__ == "__main__":
@@ -114,6 +135,21 @@ if __name__ == "__main__":
             if not ask("Repeat? [Y/n] "):
                 raise EOFError
 
+    def refresh_test():
+        ex = Exercise.to_exercise(ask_exercise_info("Edit the exercise."))
+        print(type(ex))
+        print(ex)
+        print(f"Is available: {ex.is_available()}")
+        print()
+        ex.refresh()
+        print(type(ex))
+        print(ex)
+        print(f"Is available: {ex.is_available()}")
+
+        if not ask("Repeat? [Y/n] "):
+            raise EOFError
+
     # run_test(str_test)
     # run_test(dump_load_test)
-    # run_test(eq_test)
+    run_test(eq_test)
+    # run_test(refresh_test)

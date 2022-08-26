@@ -1,13 +1,11 @@
 from __future__ import annotations
 from functools import partial
 
-import json
-import os
-import platform
-import shutil
 
-from exercise_manager import ExerciseManager
 from exercise import Exercise
+from exercise_manager import ExerciseManager
+from files import dump, load, make_fn
+from interface import ask, ask_exercise_info, cls, filled_line
 
 
 class ExerciseBuilder:
@@ -22,7 +20,10 @@ class ExerciseBuilder:
     def __exit__(self, *_) -> None:
         if ask("Save changes? [Y/n] "):
             print("Saving...")
-            dump(self.__exercises.to_dump(), self.__exercises_fn)
+            self.__save_changes()
+
+    def __save_changes(self) -> None:
+        dump(self.__exercises.to_dump(), self.__exercises_fn)
 
     def run_ui(self):
         while True:
@@ -38,7 +39,7 @@ class ExerciseBuilder:
             option = input("Option: ").strip().lower()
 
             if option in ("q", "quit", "exit"):
-                break
+                return
 
             if option in ("v", "view", "view exercises"):
                 repeat(self.view, "Look for another exercises? [Y/n] ")
@@ -69,24 +70,6 @@ class ExerciseBuilder:
             print(f)
 
 
-def make_fn(*args: str, sep: str = "-", ext: str = "json", fe: bool = False) -> str:
-    fn = sep.join(str(a).lower() for a in args)
-    if platform.system() == "Windows" or fe:
-        fn += "." + ext.lstrip(".")
-    return fn
-
-
-def cls() -> None:
-    if platform.system() == "Windows":
-        os.system("cls")
-    else:
-        os.system("clear")
-
-
-def filled_line(txt: str = "", fil: str = "*") -> str:
-    return f"{txt :{fil}^{shutil.get_terminal_size().columns}}"
-
-
 def repeat(action: partial, repeat_question: str = "Repeat the action? [Y/n] "):
     while True:
         try:
@@ -96,53 +79,6 @@ def repeat(action: partial, repeat_question: str = "Repeat the action? [Y/n] "):
 
         if not ask(repeat_question):
             return
-
-
-def ask(prompt: str) -> bool:
-    while True:
-        answer = input(prompt).strip().lower()
-
-        if answer in ("yes", "y", ""):
-            return True
-        if answer in ("no", "n"):
-            return False
-
-
-def ask_exercise_info(prompt: str, base: Exercise = Exercise(task="", body="")) -> dict:
-    info = {str(n): [k, v] for n, (k, v) in enumerate(base.to_dump().items())}
-
-    while True:
-        cls()
-        print(f"{filled_line()}\n"
-              f"{filled_line('   EDIT INFO   ')}\n"
-              f"{filled_line()}\n"
-              f"{prompt}\n")
-        print("\n".join(f"{n} ({k}): {v}" for n, (k, v) in info.items()))
-
-        variable = input(
-            "Variable ('q' or empty line to stop): ").strip().lower()
-        if variable in ("q", "quit", "exit", ""):
-            info = {k: v for _, (k, v) in info.items()}
-            try:
-                info["tags"] = [tag.strip() for tag in info["tags"].split(",")]
-            except AttributeError:
-                pass
-            return info
-        if variable in info.keys():
-            info[variable][1] = input(f"Edit {info[variable][0]}: ")
-
-
-def load(fn: str, default: object = None) -> object:
-    try:
-        with open(fn, "r") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return default
-
-
-def dump(obj: object, fn: str) -> None:
-    with open(fn, "w") as file:
-        json.dump(obj, file, separators=(",\n", ": "))
 
 
 if __name__ == "__main__":
