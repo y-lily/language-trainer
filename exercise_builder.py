@@ -53,15 +53,14 @@ class ExerciseBuilder:
             "Choose what you want to change or leave it empty to finish with editing.")
         self.__exercises.add(Exercise.to_exercise(info))
 
-    def view(self) -> None:
+    def find(self) -> list[Exercise]:
         info = ask_exercise_info(
             "Choose filters or leave them empty to view all exercises.\n")
 
-        found = self.__exercises.find(task=info["task"],
-                                      body=info["body"],
-                                      status=info["status"],
-                                      difficulty=info["difficulty"],
-                                      tags=info["tags"])
+        return self.__exercises.find(**info)
+
+    def view(self) -> None:
+        found = self.find()
 
         print(f"{filled_line('   SEARCH RESULTS   ')}")
         if not found:

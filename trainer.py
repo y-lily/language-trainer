@@ -36,6 +36,12 @@ class Trainer:
         # TODO: Make it pick the last file.
         return make_fn(lang1, lang2, "lesson")
 
+    def find(self) -> list[Exercise]:
+        info = ask_exercise_info(
+            "Choose filters or leave them empty to view all exercises.\n")
+
+        return self.__exercises.find(**info)
+
     def run_ui(self):
         while True:
             cls()
@@ -72,19 +78,10 @@ class Trainer:
             if option in ("s", "skip"):
                 exercise.make_delayed()
 
-            if option in ("f", "find", "find simialr"):
-                info = ask_exercise_info(
-                    "You can edit the search filters if you want.", exercise)
-
-                found = self.__exercises.find(task=info["task"],
-                                              body=info["body"],
-                                              status=info["status"],
-                                              difficulty=info["difficulty"],
-                                              tags=info["tags"])
-
+            if option in ("f", "find", "find similar"):
                 curr_ex_index = self.next_available_index()
 
-                for ex in found:
+                for ex in self.find():
                     if ex not in self.__lesson:
                         self.__lesson.insert(curr_ex_index, ex)
 
