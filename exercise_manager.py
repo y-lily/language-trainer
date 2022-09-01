@@ -20,6 +20,12 @@ class ExerciseManager:
     def add(self, exercise: Exercise) -> None:
         self._exercises.append(exercise)
 
+    def insert(self, index: int, exercise: Exercise) -> None:
+        self._exercises.insert(index, exercise)
+
+    # def remove(self, index: int) -> None:
+    #     self._exercises.pop(index)
+
     def update(self, new_: Exercise) -> None:
         """If the manager contains an equal exercise, such exercise is replaced with the given one.
         Otherwise, add the given exercise to the manager."""

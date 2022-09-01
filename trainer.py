@@ -72,14 +72,7 @@ class Trainer:
             if option in ("s", "skip"):
                 exercise.make_delayed()
 
-            # TODO: Replace the delay hack either with inserting new exercises after the current one or
-            # with creating an additional temporary manager.
             if option in ("f", "find", "find simialr"):
-                def delay_all():
-                    for ex in self.__lesson:
-                        if ex.is_available():
-                            ex.make_delayed()
-
                 info = ask_exercise_info(
                     "You can edit the search filters if you want.", exercise)
 
@@ -89,12 +82,11 @@ class Trainer:
                                               difficulty=info["difficulty"],
                                               tags=info["tags"])
 
-                # Replace it!
-                delay_all()
+                curr_ex_index = self.next_available_index()
 
                 for ex in found:
                     if ex not in self.__lesson:
-                        self.__lesson.add(ex)
+                        self.__lesson.insert(curr_ex_index, ex)
 
             if option in ("c", "create"):
                 new_ = Exercise.to_exercise(ask_exercise_info(
@@ -125,6 +117,9 @@ class Trainer:
 
     def next_available(self) -> Exercise:
         return next((ex for ex in self.__lesson if ex.is_available()), None)
+
+    def next_available_index(self) -> int:
+        return next((n for n, ex in enumerate(self.__lesson) if ex.is_available()), 0)
 
 
 if __name__ == "__main__":
