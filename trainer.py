@@ -29,6 +29,9 @@ class Trainer:
         for exercise in self.__lesson:
             self.__exercises.update(exercise)
 
+        self.__lesson = ExerciseManager(
+            [ex for ex in self.__lesson if ex.is_available()])
+
         dump(self.__exercises.to_dump(), self.__exercises_fn)
         dump(self.__lesson.to_dump(), self.__lesson_fn)
 
@@ -86,7 +89,7 @@ class Trainer:
                         self.__lesson.insert(curr_ex_index, ex)
 
             if option in ("c", "create"):
-                new_ = Exercise.to_exercise(ask_exercise_info(
+                new_ = Exercise(**ask_exercise_info(
                     "Edit the exercise you want to add.", exercise))
                 self.__lesson.add(new_)
 
@@ -120,80 +123,5 @@ class Trainer:
 
 
 if __name__ == "__main__":
-
-    def refresh_test():
-        tr = Trainer("fi", "en")
-
-        tr.add(Exercise(task="Write this in English.",
-                        body="Musti on iso musta koira.",
-                        solution="Musti is a big black dog.",
-                        status="available",
-                        difficulty="easy"))
-
-        tr.add(Exercise(task="Write this in English.",
-                        body="Missä tuhma kissa on?",
-                        solution="Where is the naughty cat?",
-                        status="delayed",
-                        difficulty="easy"))
-
-        tr.add(Exercise(task="Write this in Finnish.",
-                        body="Is the city cold?",
-                        solution="Onko kaupunki kylmä?",
-                        status="completed",
-                        difficulty="medium"))
-
-        tr.print_available()
-
-        print()
-        tr.refresh()
-
-        tr.print_available()
-
-    def complete_test():
-        tr = Trainer("fi", "en")
-
-        tr.add(Exercise(task="Write this in English.",
-                        body="Musti on iso musta koira.",
-                        solution="Musti is a big black dog.",
-                        status="available",
-                        difficulty="easy"))
-
-        tr.add(Exercise(task="Write this in English.",
-                        body="Missä tuhma kissa on?",
-                        solution="Where is the naughty cat?",
-                        status="delayed",
-                        difficulty="easy"))
-
-        tr.add(Exercise(task="Write this in Finnish.",
-                        body="Is the city cold?",
-                        solution="Onko kaupunki kylmä?",
-                        status="completed",
-                        difficulty="medium"))
-
-        ex = tr.next_available()
-        print(ex)
-        if ask("complete? [Y/n] "):
-            ex.make_completed()
-
-        ex = tr.next_available()
-        print(ex)
-
-    def check_solution_test():
-        tr = Trainer("fi", "en")
-        exercise = Exercise.to_exercise(
-            ask_exercise_info("Edit the exercise info."))
-
-        while True:
-            solution = input("The solution: ")
-            print(
-                f"Your solution passes: {tr.solve(exercise, solution)}")
-
-            if not ask("Repeat? [Y/n] "):
-                break
-
-    # refresh_test()
-    # complete_test()
-    # check_solution_test()
-
     with Trainer("fi", "en") as tr:
         tr.run_ui()

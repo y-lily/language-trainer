@@ -1,3 +1,4 @@
+from functools import partial
 import os
 import platform
 import shutil
@@ -52,3 +53,29 @@ def cls() -> None:
 
 def filled_line(txt: str = "", fil: str = "*") -> str:
     return f"{txt :{fil}^{shutil.get_terminal_size().columns}}"
+
+
+def parse_ranges(ranges: str) -> list[int]:
+    result = []
+
+    parts = ranges.split(",")
+
+    for part in parts:
+        if "-" in part:
+            (start, end) = sorted([int(clean(p)) for p in part.split("-")])
+            result.extend(range(start, end + 1))
+        else:
+            result.append(int(clean(part)))
+
+    return result
+
+
+def repeat(action: partial, repeat_question: str = "Repeat the action? [Y/n] "):
+    while True:
+        try:
+            action()
+        except EOFError:
+            return
+
+        if not ask(repeat_question):
+            return
