@@ -10,18 +10,6 @@ class Status(Enum):
 
     def convert(obj: str | Status) -> Status:
         try:
-            match obj.strip().lower():
-                case Status.completed.name:
-                    return Status.completed
-                case Status.delayed.name:
-                    return Status.delayed
-        except AttributeError:
-            pass
-
-        match obj:
-            case Status.completed:
-                return Status.completed
-            case Status.delayed:
-                return Status.delayed
-
-        return Status.available
+            return Status[obj.strip().lower()]
+        except (AttributeError, KeyError):
+            return obj if obj in Status.__members__.values() else Status.available

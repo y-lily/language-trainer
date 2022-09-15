@@ -1,90 +1,72 @@
 from __future__ import annotations
 
-
+from base_ui import BaseUI
 from exercise import Exercise
 from exercise_manager import ExerciseManager
-from files import dump, load, make_fn
-from interface import ask, ask_exercise_info, cls, filled_line, parse_ranges, repeat
+from interface import ask_exercise_info, filled_line, parse_ranges, print_search_results, repeat
 
 
-class ExerciseBuilder:
-    __EDIT_PROMPT = "You can edit the new exercise here. Leave the input empty to exit the editing."
+class ExerciseBuilder(BaseUI):
 
-    def __init__(self, lang1: str, lang2: str) -> None:
-        self.__exercises_fn = make_fn(lang1, lang2, "exerc")
-        self.__exercises = ExerciseManager.to_exercise_manager(
-            load(self.__exercises_fn, []))
+    def build_menu_prompt(self) -> str:
+        prompt = f"{filled_line()}\n"
+        prompt += f"{filled_line('   MAIN MENU   ')}\n"
+        prompt += f"{filled_line()}\n"
 
-    def __enter__(self) -> ExerciseBuilder:
-        return self
+        prompt += "Do you want to:\n"
 
-    def __exit__(self, *_) -> None:
-        if ask("Save changes? [Y/n] "):
-            print("Saving...")
-            self.__save_changes()
+        if self._exercise_pool:
+            prompt += f"  (v)iew exercises ({len(self._exercise_pool)} exercises total)\n"
+            prompt += "  (r)emove exercises\n"
 
-    def __save_changes(self) -> None:
-        dump(self.__exercises.to_dump(), self.__exercises_fn)
+        prompt += "  (c)reate new exercises\n"
+        prompt += "  (q)uit"
 
-    def add(self) -> None:
-        info = ask_exercise_info(self.__EDIT_PROMPT)
-        self.__exercises.add(Exercise(**info))
+        return prompt
 
-    def find(self) -> list[Exercise]:
-        info = ask_exercise_info(self.__EDIT_PROMPT)
-        return self.__exercises.find(**info)
+    def find(self) -> ExerciseManager:
+        info = ask_exercise_info(self._EDIT_PROMPT)
+        return self._exercise_pool.find(**info)
 
-    def remove(self) -> None:
+    def run_create_line(self) -> None:
+        info = ask_exercise_info(self._EDIT_PROMPT)
+        self._exercise_pool.add(Exercise(**info))
+
+    def run_remove_line(self) -> None:
         found = self.find()
-        ExerciseBuilder.print_search_results(found)
-
-        print("Type in the indices you want to remove, separated by commas.\n"
-              "You can specify ranges with '-'. For instance, the query '1, 3-5, 7' will remove the exercises with indices 1, 3, 4, 5, 7.")
+        print_search_results(found)
+        print(self._REMOVE_PROMPT)
 
         for index in parse_ranges(input()):
             try:
-                self.__exercises.remove(found[index])
+                self._exercise_pool.remove(found[index])
             except IndexError:
                 print(
                     f"Failed to remove the item #{index}: there is no such index.")
 
     def run_ui(self):
         while True:
-            cls()
-            print(f"{filled_line()}\n"
-                  f"{filled_line('   MAIN MENU   ')}\n"
-                  f"{filled_line()}\n"
-                  f"Do you want to: \n"
-                  f"  (v)iew exercises [{len(self.__exercises)} total]\n"
-                  f"  (a)dd new exercises\n"
-                  f"  (r)emove existing exercises\n"
-                  f"  (q)uit\n")
+            print(self.build_menu_prompt())
 
             option = input("Option: ").strip().lower()
 
             if option in ("q", "quit", "exit"):
                 return
 
-            if option in ("v", "view", "view exercises"):
-                repeat(self.view, "Look for another exercises? [Y/n] ")
+            if self._exercise_pool:
+                if option in ("v", "view"):
+                    repeat(self.run_view_line, "Look for another exercises?")
+                if option in ("r", "rm", "remove"):
+                    repeat(
+                        self.run_remove_line, "The removal has been completed. Remove another exercises?")
 
-            if option in ("a", "add", "add exercises", "add new exercises"):
-                repeat(self.add,
-                       "The exercise has been successfully added. Add another exercise? [Y/n] ")
-
-            if option in ("r", "rm", "remove", "remove exercises", "remove existing exercises"):
+            if option in ("c", "create"):
                 repeat(
-                    self.remove, "The removal has been completed. Remove another exercises? [Y/n] ")
+                    self.run_create_line, "The exercise has been successfully added. Add another exercise?")
 
-    def view(self) -> None:
-        ExerciseBuilder.print_search_results(self.find())
-
-    def print_search_results(found) -> None:
-        print(f"{filled_line('   SEARCH RESULTS   ')}")
-        if not found:
-            print("No matches found.")
-        for n, f in enumerate(found):
-            print(f"{n}: {f}")
+    def run_view_line(self) -> None:
+        found = self.find()
+        print_search_results(found)
 
 
 if __name__ == "__main__":

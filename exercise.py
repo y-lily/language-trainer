@@ -1,90 +1,80 @@
 from __future__ import annotations
 
+from typing import Any
+
+from difficulty import Difficulty
 from status import Status
 
 
 class Exercise:
 
-    def __init__(self, task: str, body: str, solution: str = "",
-                 status: str | Status = "", difficulty: str = "",
-                 tags: list[str] = []) -> None:
-        self.__task = task
-        self.__body = body
-        self.__solution = solution
-        self.__status = Status.convert(status)
-        self.__difficulty = difficulty
-        self.__tags = tags
+    def __init__(self, _task: str, _body: str,
+                 _solution: str = "", _status: str | Status = None,
+                 _difficulty: str | Difficulty = None, _tags: list[str] = None) -> None:
+        self._task = _task
+        self._body = _body
+        self._solution = _solution
+        self._status = Status.convert(_status)
+        self._difficulty = Difficulty.convert(_difficulty)
+        self._tags = _tags if _tags else []
 
     def __eq__(self, other: object) -> bool:
         if type(self) is type(other):
-            return all([self.__task == other.__task,
-                        self.__body == other.__body,
-                        self.__difficulty == other.__difficulty])
+            return all([self._task == other._task,
+                        self._body == other._body,
+                        self._difficulty is other._difficulty])
+
         return False
 
     def __hash__(self) -> int:
-        return hash((self.__task, self.__body, self.__difficulty))
+        return hash((self._task, self._body, self._difficulty))
 
     def __str__(self) -> str:
-        return (f"{self.__task} (*{self.__difficulty}): '{self.__body}'")
-
-    def matches(self, task: str = "", body: str = "",
-                solution: str = "", status: str | Status = "",
-                difficulty: str = "", tags: list[str] = []) -> bool:
-        """Check if the exercise satisfies all given restrictions."""
-        return all([
-            task in self.__task,
-            body in self.__body,
-            solution in self.__solution,
-            not status or Status.convert(status) == self.__status,
-            not difficulty or difficulty == self.__difficulty,
-            all(tag in self.__tags for tag in tags)
-        ])
-
-    def to_dump(self) -> object:
-        return {"task": self.__task, "body": self.__body, "solution": self.__solution,
-                "status": self.__status.name, "difficulty": self.__difficulty, "tags": self.__tags}
-
-    # def to_exercise(exercise_data: dict) -> Exercise:
-    #     try:
-    #         return Exercise(task=exercise_data["task"],
-    #                         body=exercise_data["body"],
-    #                         solution=exercise_data.get("solution", ""),
-    #                         status=exercise_data.get("status", ""),
-    #                         difficulty=exercise_data.get("difficulty", ""),
-    #                         tags=exercise_data.get("tags", []))
-    #     except KeyError:
-    #         raise ValueError("Cannot convert from dict to Exercise. \
-    #             At least one of 'task' and 'body' keys is missing.")
-
-    def make_available(self) -> None:
-        self.__status = Status.available
-
-    def make_completed(self) -> None:
-        self.__status = Status.completed
-
-    def make_delayed(self) -> None:
-        self.__status = Status.delayed
-
-    def is_available(self) -> bool:
-        return self.__status == Status.available
-
-    def refresh(self) -> None:
-        if self.__status == Status.delayed:
-            self.make_available()
-
-    def replace(self, new_: Exercise) -> None:
-        self.__task = new_.__task
-        self.__body = new_.__body
-        self.__solution = new_.__solution
-        self.__status = new_.__status
-        self.__difficulty = new_.__difficulty
-        self.__tags = new_.__tags
+        return (f"{self._task} (*{self._difficulty.name}): '{self._body}'")
 
     @property
     def solution(self) -> str:
-        return self.__solution
+        return self._solution
 
-    # @property
-    # def status(self) -> Status:
-    #     return self.__status
+    def is_available(self) -> bool:
+        return self._status is Status.available
+
+    def is_completed(self) -> bool:
+        return self._status is Status.completed
+
+    def is_delayed(self) -> bool:
+        return self._status is Status.delayed
+
+    def make_available(self) -> None:
+        self._status = Status.available
+
+    def make_completed(self) -> None:
+        self._status = Status.completed
+
+    def make_delayed(self) -> None:
+        self._status = Status.delayed
+
+    def matches(self, _task: str = "", _body: str = "",
+                _solution: str = "", _status: str | Status = None,
+                _difficulty: str | Difficulty = None, _tags: list[str] = None) -> bool:
+        """Check if the exercise satisfies all given restrictions."""
+        return all([
+            _task in self._task,
+            _body in self._body,
+            _solution in self._solution,
+            not _status or Status.convert(_status) is self._status,
+            not _difficulty or Difficulty.convert(
+                _difficulty) is self._difficulty,
+            not _tags or all(tag in self._tags for tag in _tags)
+        ])
+
+    def to_dump(self) -> dict[str, Any]:
+        dumpable = vars(self)
+
+        dumpable["_status"] = dumpable["_status"].name
+        dumpable["_difficulty"] = dumpable["_difficulty"].name
+
+        return dumpable
+
+    def update(self, new_: Exercise) -> None:
+        vars(self).update(vars(new_))

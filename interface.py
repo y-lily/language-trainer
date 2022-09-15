@@ -4,9 +4,13 @@ import platform
 import shutil
 
 from exercise import Exercise
+from exercise_manager import ExerciseManager
 
 
 def ask(prompt: str) -> bool:
+    if not prompt.rstrip().endswith("[Y/n]"):
+        prompt += " [Y/n] "
+
     while True:
         answer = input(prompt).strip().lower()
 
@@ -16,35 +20,44 @@ def ask(prompt: str) -> bool:
             return False
 
 
-def ask_exercise_info(prompt: str, base: Exercise = Exercise(task="", body="")) -> dict:
-    info = {str(n): [k, v] for n, (k, v) in enumerate(base.to_dump().items())}
+def ask_exercise_info(prompt: str, base_exercise: Exercise = None) -> dict:
+    # Note to future myself: here, I learned it the hard way that you should NOT use mutable objects as default arguments.
+    if not base_exercise:
+        base_exercise = Exercise(_task="", _body="")
+
+    info = {str(n): [k, v]
+            for n, (k, v) in enumerate(base_exercise.to_dump().items())}
 
     while True:
-        cls()
         print(f"{filled_line()}\n"
-              f"{filled_line('   EDIT INFO   ')}\n"
-              f"{filled_line()}\n"
-              f"{prompt}\n")
-        print("\n".join(f"{n} ({k}): {v}" for n, (k, v) in info.items()))
+              f"{prompt}\n"
+              f"{filled_line()}\n")
 
-        variable = input(
+        print("\n".join(f"{n}. ({clean(k)}): {v}" for n,
+              (k, v) in info.items()))
+
+        user_input = input(
             "Variable ('q' or empty line to stop): ").strip().lower()
-        if variable in ("q", "quit", "exit", ""):
+
+        if user_input in ("q", "quit", "exit", ""):
             info = {k: v for _, (k, v) in info.items()}
             try:
-                info["tags"] = [tag.strip() for tag in info["tags"].split(",")]
+                info["_tags"] = [tag.strip()
+                                 for tag in info["_tags"].split(",")]
             except AttributeError:
+                # Means this is a list which remained unchanged.
                 pass
             return info
-        if variable in info.keys():
-            info[variable][1] = input(f"Edit {info[variable][0]}: ")
+
+        if user_input in info.keys():
+            info[user_input][1] = input(f"Edit {clean(info[user_input][0])}: ")
 
 
 def clean(string_: str) -> str:
     return "".join(s.lower() for s in string_ if s.isalnum())
 
 
-def cls() -> None:
+def clearscreen() -> None:
     if platform.system() == "Windows":
         os.system("cls")
     else:
@@ -68,6 +81,13 @@ def parse_ranges(ranges: str) -> list[int]:
             result.append(int(clean(part)))
 
     return result
+
+
+def print_search_results(found: ExerciseManager) -> None:
+    print(f"{filled_line('   SEARCH RESULTS   ')}")
+    if not found:
+        print("No matches found.")
+    print(found)
 
 
 def repeat(action: partial, repeat_question: str = "Repeat the action? [Y/n] "):
