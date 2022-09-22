@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from difficulty import Difficulty
@@ -69,10 +70,10 @@ class Exercise:
         ])
 
     def to_dump(self) -> dict[str, Any]:
-        dumpable = vars(self)
+        dumpable = copy.deepcopy(vars(self))
 
-        dumpable["_status"] = dumpable["_status"].name
-        dumpable["_difficulty"] = dumpable["_difficulty"].name
+        dumpable["_status"] = self._status.name
+        dumpable["_difficulty"] = self._difficulty.name
 
         return dumpable
 
