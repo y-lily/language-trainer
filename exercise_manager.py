@@ -10,10 +10,16 @@ from status import Status
 class ExerciseManager:
 
     def __init__(self, exercises: list[Exercise] = None) -> None:
-        self._exercises = exercises if exercises else []
+        self._exercises = [] if exercises is None else exercises
+        if not hasattr(self._exercises, "__iter__"):
+            raise TypeError(f"{type(self._exercises)} is not iterable.")
 
     def __getitem__(self, _s: slice) -> ExerciseManager:
-        return ExerciseManager(self._exercises.__getitem__(_s))
+        sliced = self._exercises.__getitem__(_s)
+        try:
+            return ExerciseManager(sliced)
+        except TypeError:
+            return sliced
 
     def __iter__(self) -> Iterator[Exercise]:
         return self._exercises.__iter__()
