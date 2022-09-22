@@ -43,9 +43,8 @@ def ask_exercise_info(prompt: str, base_exercise: Exercise = None) -> dict:
             info = {k: v for _, (k, v) in info.items()}
             try:
                 info["_tags"] = [tag.strip()
-                                 for tag in info["_tags"].split(",")]
+                                 for tag in info["_tags"].split(",") if tag.strip()]
             except AttributeError:
-                # Means this is a list which remained unchanged.
                 pass
             return info
 
