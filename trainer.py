@@ -122,6 +122,7 @@ class Trainer(BaseUI):
                 exercise = found[index]
                 exercise.make_available()
                 self._lesson.insert(current_index, exercise)
+                current_index += 1
             except IndexError:
                 print(f"There is no item with the index #{index}.")
 
